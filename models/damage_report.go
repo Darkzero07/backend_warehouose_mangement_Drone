@@ -12,4 +12,5 @@ type DamageReport struct {
 	Project     Project `gorm:"foreignkey:ProjectID"` //Belongs To relationship
 	Description string `gorm:"not null"`
 	Status      string `gorm:"default:'Pending'"` 
+	Broken_Drone uint  
 }
