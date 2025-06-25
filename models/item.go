@@ -12,3 +12,4 @@ type Item struct {
 	Category    Category // Belongs To relationship
 	Remark      string
 }
+

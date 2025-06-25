@@ -185,3 +185,4 @@ func (ctrl *TransactionController) GetInventorySummary(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, items)
 }
+

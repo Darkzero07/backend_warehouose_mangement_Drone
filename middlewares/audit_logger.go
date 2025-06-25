@@ -2,9 +2,8 @@ package middlewares
 
 import (
 	"bytes"
-	_"encoding/json"
 	"io"
-	_"net/http"
+	_"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -13,17 +12,8 @@ import (
 
 func AuditLogger(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Skip for certain routes
-		if c.Request.URL.Path == "/login" || c.Request.URL.Path == "/register" {
-			c.Next()
-			return
-		}
-
-		// Get user ID if authenticated
-		userID, exists := c.Get("userID")
-		if !exists {
-			userID = uint(0) // Anonymous user
-		}
+		// Start timer
+		// start := time.Now()
 
 		// Get request body
 		var bodyBytes []byte
@@ -35,22 +25,30 @@ func AuditLogger(db *gorm.DB) gin.HandlerFunc {
 		// Process request
 		c.Next()
 
-		// Log after request is processed
-		if c.Writer.Status() < 400 { // Only log successful actions
-			action := c.Request.Method + " " + c.Request.URL.Path
-			recordID := uint(0) // You'll need to extract this from the response or request
-
-			log := models.AuditLog{
-				UserID:    userID.(uint),
-				Action:    action,
-				TableName: "", // You'll need to determine this based on the route
-				RecordID:  recordID,
-				OldValue:  "", // You can capture this for PUT/PATCH requests
-				NewValue:  string(bodyBytes),
-				IPAddress: c.ClientIP(),
-			}
-
-			db.Create(&log)
+		// Get user ID if authenticated
+		var userID uint
+		if id, exists := c.Get("userID"); exists {
+			userID = id.(uint)
 		}
+
+		// Create audit log
+		log := models.AuditLog{
+			UserID:    userID,
+			Action:    c.Request.Method + " " + c.Request.URL.Path,
+			TableName: "users",
+			IPAddress: c.ClientIP(),
+			NewValue:  string(bodyBytes),
+		}
+
+		// For login/register, we can add specific handling
+		if c.Request.URL.Path == "/login" || c.Request.URL.Path == "/register" {
+			log.Action = c.Request.URL.Path // Just use the path as action
+			if c.Writer.Status() >= 400 {
+				log.Action = log.Action + "_failed"
+			}
+		}
+
+		// Save the log (you might want to do this in a goroutine for performance)
+		db.Create(&log)
 	}
 }

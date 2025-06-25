@@ -32,6 +32,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	damageReportController := controllers.NewDamageReportController(db)
 	categoryController := controllers.NewCategoryController(db)
 	passwordResetController := controllers.NewPasswordResetController(db)
+	combinedReportController := controllers.NewCombinedReportController(db)
 
 	// Public routes
 	r.POST("/register", authController.Register)
@@ -95,6 +96,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			admin.GET("/admin/transactions", transactionController.GetAllTransactions)
 			admin.GET("/admin/transactions/project/:projectId", transactionController.GetTransactionsByProject)
 			admin.GET("/admin/inventory-summary", transactionController.GetInventorySummary)
+			admin.GET("/admin/summary-table", combinedReportController.GetCombinedReports)
 
 			// Damage Report Management (Admin specific)
 			// admin.GET("/admin/damage-reports", damageReportController.GetDamageReports)
