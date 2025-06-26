@@ -3,8 +3,8 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"warehouse-store/controllers" // Make sure this path is correct based on your project structure
-	"warehouse-store/middlewares" // Make sure this path is correct based on your project structure
+	"warehouse-store/controllers"
+	"warehouse-store/middlewares"
 )
 
 func SetupRouter(db *gorm.DB) *gin.Engine {
@@ -12,7 +12,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// CORS (if frontend and backend are on different origins)
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Replace with your frontend origin in production
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
@@ -24,15 +24,19 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		c.Next()
 	})
 
+	// Initialize controllers
 	authController := controllers.NewAuthController(db)
 	userController := controllers.NewUserController(db)
 	projectController := controllers.NewProjectController(db)
 	itemController := controllers.NewItemController(db)
-	transactionController := controllers.NewTransactionController(db)
 	damageReportController := controllers.NewDamageReportController(db)
 	categoryController := controllers.NewCategoryController(db)
 	passwordResetController := controllers.NewPasswordResetController(db)
-	combinedReportController := controllers.NewCombinedReportController(db)
+	combinedReportController := controllers.NewCombinedController(db)
+	
+	// New transaction controllers
+	transactionBorrowController := controllers.NewTransactionBorrowController(db)
+	transactionReturnController := controllers.NewTransactionReturnController(db)
 
 	// Public routes
 	r.POST("/register", authController.Register)
@@ -51,13 +55,13 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		authorized.GET("/projects/:id", projectController.GetProjectByID)
 		authorized.GET("/projects/filter-month/:year/:month", projectController.GetProjectsByMonth)
 
-		// New Category routes (accessible to all authenticated users for viewing)
+		// Category routes (accessible to all authenticated users for viewing)
 		authorized.GET("/categories", categoryController.GetCategories)
 		authorized.GET("/categories/:id", categoryController.GetCategoryByID)
 
-		// Borrow/Return by any authenticated user
-		authorized.POST("/transactions/borrow", transactionController.BorrowItem)
-		authorized.POST("/transactions/return", transactionController.ReturnItem)
+		// New Borrow/Return routes with separate controllers
+		authorized.POST("/transactions/borrow", transactionBorrowController.BorrowItem)
+		authorized.POST("/transactions/return", transactionReturnController.ReturnItem)
 
 		// Report damage by any authenticated user
 		authorized.POST("/damage-reports", damageReportController.CreateDamageReport)
@@ -87,18 +91,19 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			admin.PUT("/items/:id", itemController.UpdateItem)
 			admin.DELETE("/items/:id", itemController.DeleteItem)
 
-			// New: Category Management (Admin only)
+			// Category Management (Admin only)
 			admin.POST("/categories", categoryController.CreateCategory)
 			admin.PUT("/categories/:id", categoryController.UpdateCategory)
 			admin.DELETE("/categories/:id", categoryController.DeleteCategory)
 
 			// Transaction Reporting (Admin specific)
-			admin.GET("/admin/transactions", transactionController.GetAllTransactions)
-			admin.GET("/admin/transactions/project/:projectId", transactionController.GetTransactionsByProject)
-			admin.GET("/admin/inventory-summary", transactionController.GetInventorySummary)
-			admin.GET("/admin/summary-table", combinedReportController.GetCombinedReports)
+			admin.GET("/admin/transactions/borrows", transactionBorrowController.GetAllBorrowTransactions)
+			admin.GET("/admin/transactions/borrows/project/:projectId", transactionBorrowController.GetBorrowTransactionsByProject)
+			admin.GET("/admin/transactions/returns", transactionReturnController.GetAllReturnTransactions)
+			admin.GET("/admin/summary-table", combinedReportController.GetFullCombinedData)
 
 			// Damage Report Management (Admin specific)
+			// These are now available to all authenticated users above
 			// admin.GET("/admin/damage-reports", damageReportController.GetDamageReports)
 			// admin.PUT("/admin/damage-reports/:id/status", damageReportController.UpdateDamageReportStatus)
 		}

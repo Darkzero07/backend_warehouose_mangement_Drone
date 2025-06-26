@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"github.com/gin-contrib/cors"
 	"warehouse-store/config"
 	"warehouse-store/models"
 	"warehouse-store/routers"
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	// Auto-migrate database schema
-	err = db.AutoMigrate(&models.User{}, &models.Project{}, &models.Category{}, &models.Item{}, &models.Transaction{}, &models.DamageReport{}, &models.AuditLog{},)
+	err = db.AutoMigrate(&models.User{}, &models.Project{}, &models.Category{}, &models.Item{}, &models.TransactionBorrow{}, &models.TransactionReturn{}, &models.DamageReport{}, &models.AuditLog{},)
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}
@@ -62,6 +63,7 @@ func main() {
 
 	// Setup Gin router
 	r := routers.SetupRouter(db)
+	r.Use(cors.Default()) // All origins allowed by default
 
 	r.Use(middlewares.AuditLogger(db))
 
