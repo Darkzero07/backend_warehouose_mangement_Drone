@@ -3,28 +3,30 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"github.com/gin-contrib/cors"
+
 	"warehouse-store/config"
+	"warehouse-store/middlewares"
 	"warehouse-store/models"
 	"warehouse-store/routers"
-	"warehouse-store/middlewares"
 	"warehouse-store/utils"
 )
 
 func main() {
-	 utils.InitLogger()
-    defer utils.Logger.Sync()
+	utils.InitLogger()
+	defer utils.Logger.Sync()
 	cfg := config.LoadConfig()
 
 	// Connect to PostgreSQL
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
-	
+
 	var db *gorm.DB
 	var err error
 	maxRetries := 5
@@ -42,7 +44,7 @@ func main() {
 	}
 
 	// Auto-migrate database schema
-	err = db.AutoMigrate(&models.User{}, &models.Project{}, &models.Category{}, &models.Item{}, &models.TransactionBorrow{}, &models.TransactionReturn{}, &models.DamageReport{}, &models.AuditLog{},)
+	err = db.AutoMigrate(&models.User{}, &models.Project{}, &models.Category{}, &models.Item{}, &models.TransactionBorrow{}, &models.TransactionReturn{}, &models.DamageReport{}, &models.AuditLog{})
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}
@@ -63,7 +65,16 @@ func main() {
 
 	// Setup Gin router
 	r := routers.SetupRouter(db)
-	r.Use(cors.Default()) // All origins allowed by default
+
+	// Configure CORS middleware
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     cfg.CORSAllowOrigins,
+		AllowMethods:     cfg.CORSAllowMethods,
+		AllowHeaders:     cfg.CORSAllowHeaders,
+		ExposeHeaders:    strings.Split(cfg.CORSExposeHeaders, ","),
+		AllowCredentials: cfg.CORSAllowCredentials,
+		MaxAge:           parseDuration(cfg.CORSMaxAge),
+	}))
 
 	r.Use(middlewares.AuditLogger(db))
 
@@ -72,4 +83,12 @@ func main() {
 	if err := r.Run(":" + cfg.ServerPort); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
+}
+
+func parseDuration(seconds string) time.Duration {
+	duration, err := time.ParseDuration(seconds + "s")
+	if err != nil {
+		return 24 * time.Hour 
+	}
+	return duration
 }

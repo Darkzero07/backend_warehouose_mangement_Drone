@@ -33,7 +33,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	categoryController := controllers.NewCategoryController(db)
 	passwordResetController := controllers.NewPasswordResetController(db)
 	combinedReportController := controllers.NewCombinedController(db)
-	
+
 	// New transaction controllers
 	transactionBorrowController := controllers.NewTransactionBorrowController(db)
 	transactionReturnController := controllers.NewTransactionReturnController(db)

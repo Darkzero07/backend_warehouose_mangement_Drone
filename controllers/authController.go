@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"net/http"
-	_"time"
+	_ "time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -79,7 +79,7 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 			IPAddress: c.ClientIP(),
 		}
 		ctrl.DB.Create(&auditLog)
-		
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
@@ -94,7 +94,7 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 			IPAddress: c.ClientIP(),
 		}
 		ctrl.DB.Create(&auditLog)
-		
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}

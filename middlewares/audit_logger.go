@@ -3,7 +3,7 @@ package middlewares
 import (
 	"bytes"
 	"io"
-	_"time"
+	_ "time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"warehouse-store/models"
+	"warehouse-store/utils"
 )
 
 type CombinedController struct {
@@ -34,6 +35,7 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 
 	var projects []models.Project
 	if err := projectQuery.Find(&projects).Error; err != nil {
+		utils.LogError("Failed", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 		return
 	}
@@ -59,6 +61,7 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 		}
 		if endDate != "" {
 			if parsedDate, err := time.Parse("2006-01-02", endDate); err == nil {
+				utils.LogError("Failed", err)
 				borrowQuery = borrowQuery.Where("borrow_date <= ?", parsedDate)
 			}
 		}
@@ -66,6 +69,7 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 		var borrows []models.TransactionBorrow
 		if transactionType == "" || transactionType == "borrow" {
 			if err := borrowQuery.Find(&borrows).Error; err != nil {
+				utils.LogError("Failed", err)
 				ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 				return
 			}
@@ -84,11 +88,13 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 		}
 		if startDate != "" {
 			if parsedDate, err := time.Parse("2006-01-02", startDate); err == nil {
+				utils.LogError("Failed", err)
 				returnQuery = returnQuery.Where("return_date >= ?", parsedDate)
 			}
 		}
 		if endDate != "" {
 			if parsedDate, err := time.Parse("2006-01-02", endDate); err == nil {
+				utils.LogError("Failed", err)
 				returnQuery = returnQuery.Where("return_date <= ?", parsedDate)
 			}
 		}
@@ -96,6 +102,7 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 		var returns []models.TransactionReturn
 		if transactionType == "" || transactionType == "return" {
 			if err := returnQuery.Find(&returns).Error; err != nil {
+				utils.LogError("Failed", err)
 				ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 				return
 			}
@@ -105,6 +112,7 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 		var damageReports []models.DamageReport
 		if err := cc.DB.Preload("Item").Preload("Reporter").
 			Where("project_id = ?", project.ID).Find(&damageReports).Error; err != nil {
+			utils.LogError("Failed", err)
 			continue
 		}
 
@@ -171,29 +179,29 @@ func (cc *CombinedController) GetFullCombinedData(ctx *gin.Context) {
 // Helper function to create return entry
 func (cc *CombinedController) createReturnEntry(project models.Project, returnTx models.TransactionReturn, damageReports []models.DamageReport) map[string]interface{} {
 	entry := map[string]interface{}{
-		"Project_ID":           project.ID,
-		"Project_Name":         project.Name,
-		"Project_Description":  project.Description,
-		"Project_Start_Date":   project.StartDate,
-		"Project_End_Date":     project.EndDate,
-		"Number_of_Drone":      project.Number_of_Drone,
-		"Project_Location":     project.Location,
+		"Project_ID":          project.ID,
+		"Project_Name":        project.Name,
+		"Project_Description": project.Description,
+		"Project_Start_Date":  project.StartDate,
+		"Project_End_Date":    project.EndDate,
+		"Number_of_Drone":     project.Number_of_Drone,
+		"Project_Location":    project.Location,
 		"Item_ID":             returnTx.ItemID,
 		"Item_Description":    returnTx.Item.Description,
-		"Item_Status":        returnTx.Item.Status,
-		"Category":           returnTx.Item.Category.Name,
-		"Remark":             returnTx.Item.Remark,
-		"Transaction_ID":     returnTx.ID,
-		"Transaction_Item":   returnTx.Item.Name,
-		"Borrow_Quantity": returnTx.Borrow.BorrowQuantity,
-		"Return_Quantity": returnTx.ReturnQuantity,
-		"Borrow_ID":         returnTx.BorrowID,
-		"Borrow_Date":      returnTx.Borrow.BorrowDate,
-		"Return_Date":     returnTx.ReturnDate,
-		"Broken_Drone":   0,
-		"User_ID":      returnTx.UserID,
-		"Reporter":    returnTx.User.Username,
-		"Created_At": returnTx.CreatedAt,
+		"Item_Status":         returnTx.Item.Status,
+		"Category":            returnTx.Item.Category.Name,
+		"Remark":              returnTx.Item.Remark,
+		"Transaction_ID":      returnTx.ID,
+		"Transaction_Item":    returnTx.Item.Name,
+		"Borrow_Quantity":     returnTx.Borrow.BorrowQuantity,
+		"Return_Quantity":     returnTx.ReturnQuantity,
+		"Borrow_ID":           returnTx.BorrowID,
+		"Borrow_Date":         returnTx.Borrow.BorrowDate,
+		"Return_Date":         returnTx.ReturnDate,
+		"Broken_Drone":        0,
+		"User_ID":             returnTx.UserID,
+		"Reporter":            returnTx.User.Username,
+		"Created_At":          returnTx.CreatedAt,
 	}
 
 	// Add damage report info if exists

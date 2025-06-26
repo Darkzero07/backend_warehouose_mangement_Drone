@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -24,11 +24,11 @@ func (ctrl *TransactionBorrowController) BorrowItem(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 
 	var input struct {
-		ItemID      uint   `json:"item_id" binding:"required"`
-		ProjectID   uint   `json:"project_id" binding:"required"`
-		Quantity    int    `json:"quantity" binding:"required,min=1"`
-		BorrowDate  string `json:"borrow_date" binding:"required"`
-		DueDate     string `json:"due_date" binding:"required"`
+		ItemID     uint   `json:"item_id" binding:"required"`
+		ProjectID  uint   `json:"project_id" binding:"required"`
+		Quantity   int    `json:"quantity" binding:"required,min=1"`
+		BorrowDate string `json:"borrow_date" binding:"required"`
+		DueDate    string `json:"due_date" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.LogError("Failed", err)
@@ -68,12 +68,12 @@ func (ctrl *TransactionBorrowController) BorrowItem(c *gin.Context) {
 
 	// Create borrow transaction record
 	transaction := models.TransactionBorrow{
-		UserID:        userID,
-		ItemID:        input.ItemID,
-		ProjectID:     input.ProjectID,
+		UserID:         userID,
+		ItemID:         input.ItemID,
+		ProjectID:      input.ProjectID,
 		BorrowQuantity: input.Quantity,
-		BorrowDate:    input.BorrowDate,
-		DueDate:       input.DueDate,
+		BorrowDate:     input.BorrowDate,
+		DueDate:        input.DueDate,
 	}
 	if err := tx.Create(&transaction).Error; err != nil {
 		utils.LogError("Failed", err)

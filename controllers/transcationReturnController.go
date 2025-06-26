@@ -22,9 +22,9 @@ func (ctrl *TransactionReturnController) ReturnItem(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 
 	var input struct {
-		BorrowID    uint   `json:"borrow_id" binding:"required"`
-		Quantity    int    `json:"quantity" binding:"required,min=1"`
-		ReturnDate  string `json:"return_date" binding:"required"`
+		BorrowID   uint   `json:"borrow_id" binding:"required"`
+		Quantity   int    `json:"quantity" binding:"required,min=1"`
+		ReturnDate string `json:"return_date" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.LogError("Failed", err)
@@ -64,12 +64,12 @@ func (ctrl *TransactionReturnController) ReturnItem(c *gin.Context) {
 
 	// Create return transaction record
 	transaction := models.TransactionReturn{
-		UserID:        userID,
-		ItemID:        borrow.ItemID,
-		ProjectID:     borrow.ProjectID,
+		UserID:         userID,
+		ItemID:         borrow.ItemID,
+		ProjectID:      borrow.ProjectID,
 		ReturnQuantity: input.Quantity,
-		ReturnDate:    input.ReturnDate,
-		BorrowID:      borrow.ID,
+		ReturnDate:     input.ReturnDate,
+		BorrowID:       borrow.ID,
 	}
 	if err := tx.Create(&transaction).Error; err != nil {
 		tx.Rollback()

@@ -97,28 +97,28 @@ func (ctrl *DamageReportController) UpdateDamageReportStatus(c *gin.Context) {
 	}
 
 	var input struct {
-        Status      string `json:"status"`
-        Broken_Drone int   `json:"broken_drone"`
-    }
+		Status       string `json:"status"`
+		Broken_Drone int    `json:"broken_drone"`
+	}
 
-    if err := c.ShouldBindJSON(&input); err != nil {
-        utils.LogError("Failed", err)
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.LogError("Failed", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    // Update fields only if they're provided in the input
-    if input.Status != "" {
-        report.Status = input.Status
-    }
-    if input.Broken_Drone != 0 { 
-        report.Broken_Drone = uint(input.Broken_Drone)
-    }
+	// Update fields only if they're provided in the input
+	if input.Status != "" {
+		report.Status = input.Status
+	}
+	if input.Broken_Drone != 0 {
+		report.Broken_Drone = uint(input.Broken_Drone)
+	}
 
-    if err := ctrl.DB.Save(&report).Error; err != nil {
-        utils.LogError("Failed", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update damage report"})
-        return
-    }
-    c.JSON(http.StatusOK, report)
+	if err := ctrl.DB.Save(&report).Error; err != nil {
+		utils.LogError("Failed", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update damage report"})
+		return
+	}
+	c.JSON(http.StatusOK, report)
 }
