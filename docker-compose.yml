@@ -33,6 +33,30 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin # Persist pgAdmin configuration and data
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: db
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_NAME: warehouse
+      DB_PORT: 5432
+      REDIS_ADDR: redis:6379
+      JWT_SECRET: Ult_wms
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app # Mount current directory to /app in container for development
+
+
 volumes:
   pgdata:
   pgadmin_data: # New volume for pgAdmin data

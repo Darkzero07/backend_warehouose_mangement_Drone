@@ -19,7 +19,21 @@ docker volume prune -f
 <Clean Everything (Containers + Volumes + Networks + Images)>
 docker system prune -a --volumes -f
 
+<Stop all the containers>
+docker stop $(docker ps -a -q)
+
+<Remove all the containers>
+docker rm $(docker ps -a -q)
+
+<check port usage>
+netstat -nlp
+lsof -i:<portnumber>
+
 
 <create project>
 go mod init warehouse-store
 go mod tidy (update dependencies)
+
+<run backend>
+docker-compose up -d
+npm start

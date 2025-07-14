@@ -95,8 +95,8 @@ func (ctrl *ProjectController) DeleteProject(c *gin.Context) {
 }
 
 func (ctrl *ProjectController) GetProjectsByMonth(c *gin.Context) {
-	month := c.Param("month") // Expecting format like "06" for June
-	year := c.Param("year")   // Expecting format like "2025"
+	month := c.Param("month") 
+	year := c.Param("year")   
 
 	var projects []models.Project
 	if err := ctrl.DB.Where("SUBSTRING(start_date, 4, 2) = ? AND SUBSTRING(start_date, 7, 4) = ?", month, year).

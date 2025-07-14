@@ -19,22 +19,50 @@ func NewTransactionBorrowController(db *gorm.DB) *TransactionBorrowController {
 	return &TransactionBorrowController{DB: db}
 }
 
-// User & Admin: เบิกอุปกรณ์
+type BorrowInput struct {
+	ItemIDStr      string `json:"item_id" binding:"required"`
+	ProjectIDStr   string `json:"project_id" binding:"required"`
+	BorrowQuantityStr string    `json:"borrow_quantity" binding:"required,min=1"`
+	BorrowDate     string `json:"borrow_date" binding:"required"`
+	DueDate        string `json:"due_date" binding:"required"`
+
+	// These will be populated after validation
+	ItemID    uint `json:"-"`
+	ProjectID uint `json:"-"`
+	BorrowQuantity int `json:"-"`
+}
+
 func (ctrl *TransactionBorrowController) BorrowItem(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 
-	var input struct {
-		ItemID     uint   `json:"item_id" binding:"required"`
-		ProjectID  uint   `json:"project_id" binding:"required"`
-		Quantity   int    `json:"quantity" binding:"required,min=1"`
-		BorrowDate string `json:"borrow_date" binding:"required"`
-		DueDate    string `json:"due_date" binding:"required"`
-	}
+	var input BorrowInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.LogError("Failed", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Convert string IDs to uint
+	itemID, err := strconv.ParseUint(input.ItemIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
+		return
+	}
+	input.ItemID = uint(itemID)
+
+	projectID, err := strconv.ParseUint(input.ProjectIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		return
+	}
+	input.ProjectID = uint(projectID)
+
+	borrowQuantity, err := strconv.ParseUint(input.BorrowQuantityStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		return
+	}
+	input.BorrowQuantity = int(borrowQuantity)
 
 	tx := ctrl.DB.Begin()
 	defer func() {
@@ -51,14 +79,13 @@ func (ctrl *TransactionBorrowController) BorrowItem(c *gin.Context) {
 		return
 	}
 
-	if item.Quantity < input.Quantity {
+	if item.Quantity < input.BorrowQuantity {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Not enough %s in stock. Available: %d", item.Name, item.Quantity)})
 		return
 	}
 
-	// Update item quantity
-	item.Quantity -= input.Quantity
+	item.Quantity -= input.BorrowQuantity
 	if err := tx.Save(&item).Error; err != nil {
 		utils.LogError("Failed", err)
 		tx.Rollback()
@@ -66,12 +93,11 @@ func (ctrl *TransactionBorrowController) BorrowItem(c *gin.Context) {
 		return
 	}
 
-	// Create borrow transaction record
 	transaction := models.TransactionBorrow{
 		UserID:         userID,
 		ItemID:         input.ItemID,
 		ProjectID:      input.ProjectID,
-		BorrowQuantity: input.Quantity,
+		BorrowQuantity: input.BorrowQuantity,
 		BorrowDate:     input.BorrowDate,
 		DueDate:        input.DueDate,
 	}
@@ -86,7 +112,6 @@ func (ctrl *TransactionBorrowController) BorrowItem(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Item borrowed successfully", "transaction": transaction})
 }
 
-// Admin: ดูข้อมูลการเบิกทั้งหมด
 func (ctrl *TransactionBorrowController) GetAllBorrowTransactions(c *gin.Context) {
 	var transactions []models.TransactionBorrow
 	if err := ctrl.DB.Preload("User").Preload("Item.Category").Preload("Project").Find(&transactions).Error; err != nil {
@@ -96,7 +121,6 @@ func (ctrl *TransactionBorrowController) GetAllBorrowTransactions(c *gin.Context
 	c.JSON(http.StatusOK, transactions)
 }
 
-// Admin: ดูข้อมูลการเบิกของ user ในแต่ละ project
 func (ctrl *TransactionBorrowController) GetBorrowTransactionsByProject(c *gin.Context) {
 	projectID, err := strconv.Atoi(c.Param("projectId"))
 	if err != nil {

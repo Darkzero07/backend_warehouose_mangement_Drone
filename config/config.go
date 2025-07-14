@@ -45,7 +45,7 @@ func LoadConfig() *Config {
 		CORSAllowHeaders:     splitEnv("CORS_ALLOW_HEADERS", "Origin,Content-Type,Accept,Authorization"),
 		CORSAllowCredentials: getEnv("CORS_ALLOW_CREDENTIALS", "true") == "true",
 		CORSExposeHeaders:    getEnv("CORS_EXPOSE_HEADERS", "Content-Length"),
-		CORSMaxAge:           getEnv("CORS_MAX_AGE", "86400"),
+		CORSMaxAge:           getEnv("CORS_MAX_AGE", "86400"), //24 Hrs.
 	}
 }
 

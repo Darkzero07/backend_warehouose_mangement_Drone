@@ -62,6 +62,8 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		// New Borrow/Return routes with separate controllers
 		authorized.POST("/transactions/borrow", transactionBorrowController.BorrowItem)
 		authorized.POST("/transactions/return", transactionReturnController.ReturnItem)
+		authorized.GET("/transactions/borrows", transactionBorrowController.GetAllBorrowTransactions)
+		authorized.GET("/transactions/returns", transactionReturnController.GetAllReturnTransactions)
 
 		// Report damage by any authenticated user
 		authorized.POST("/damage-reports", damageReportController.CreateDamageReport)
@@ -105,7 +107,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			// Damage Report Management (Admin specific)
 			// These are now available to all authenticated users above
 			// admin.GET("/admin/damage-reports", damageReportController.GetDamageReports)
-			// admin.PUT("/admin/damage-reports/:id/status", damageReportController.UpdateDamageReportStatus)
+			admin.PUT("/admin/damage-reports/:id/status", damageReportController.UpdateDamageReportStatus)
 		}
 	}
 

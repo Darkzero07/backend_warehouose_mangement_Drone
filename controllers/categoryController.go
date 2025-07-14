@@ -18,7 +18,6 @@ func NewCategoryController(db *gorm.DB) *CategoryController {
 	return &CategoryController{DB: db}
 }
 
-// CreateCategory handles the creation of a new category. (Admin only)
 func (ctrl *CategoryController) CreateCategory(c *gin.Context) {
 	var category models.Category
 	if err := c.ShouldBindJSON(&category); err != nil {
@@ -35,7 +34,6 @@ func (ctrl *CategoryController) CreateCategory(c *gin.Context) {
 	c.JSON(http.StatusCreated, category)
 }
 
-// GetCategories fetches all categories. (Accessible to all authenticated users)
 func (ctrl *CategoryController) GetCategories(c *gin.Context) {
 	var categories []models.Category
 	if err := ctrl.DB.Find(&categories).Error; err != nil {
@@ -46,7 +44,6 @@ func (ctrl *CategoryController) GetCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, categories)
 }
 
-// GetCategoryByID fetches a single category by its ID. (Accessible to all authenticated users)
 func (ctrl *CategoryController) GetCategoryByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var category models.Category
@@ -58,7 +55,6 @@ func (ctrl *CategoryController) GetCategoryByID(c *gin.Context) {
 	c.JSON(http.StatusOK, category)
 }
 
-// UpdateCategory handles updating an existing category. (Admin only)
 func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var category models.Category
@@ -86,7 +82,6 @@ func (ctrl *CategoryController) UpdateCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, category)
 }
 
-// DeleteCategory handles deleting a category. (Admin only)
 func (ctrl *CategoryController) DeleteCategory(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := ctrl.DB.Delete(&models.Category{}, id).Error; err != nil {

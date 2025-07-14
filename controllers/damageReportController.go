@@ -18,7 +18,6 @@ func NewDamageReportController(db *gorm.DB) *DamageReportController {
 	return &DamageReportController{DB: db}
 }
 
-// User & Admin: สร้างรายงานอุปกรณ์ชำรุด
 func (ctrl *DamageReportController) CreateDamageReport(c *gin.Context) {
 	reporterID := c.MustGet("userID").(uint)
 
@@ -35,7 +34,7 @@ func (ctrl *DamageReportController) CreateDamageReport(c *gin.Context) {
 	}
 
 	report.ReporterID = reporterID
-	report.Status = "Pending" // Default status
+	report.Status = "Pending" 
 
 	tx := ctrl.DB.Begin()
 	defer func() {
@@ -45,16 +44,13 @@ func (ctrl *DamageReportController) CreateDamageReport(c *gin.Context) {
 	}()
 
 	var item models.Item
-	// Preload Category when fetching the item to ensure it's available if needed (though not stored directly in report)
+
 	if err := tx.Preload("Category").First(&item, report.ItemID).Error; err != nil {
 		utils.LogError("Failed", err)
 		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
 		return
 	}
-
-	// Category field is removed from DamageReport model. It's accessed via Item.Category.Name
-	// report.Category = item.Category
 
 	var project models.Project
 	if err := tx.First(&project, report.ProjectID).Error; err != nil {
@@ -74,7 +70,6 @@ func (ctrl *DamageReportController) CreateDamageReport(c *gin.Context) {
 	c.JSON(http.StatusCreated, report)
 }
 
-// Admin: ดูรายงานอุปกรณ์ชำรุดทั้งหมด
 func (ctrl *DamageReportController) GetDamageReports(c *gin.Context) {
 	var reports []models.DamageReport
 	// New: Preload Item.Category
@@ -86,7 +81,6 @@ func (ctrl *DamageReportController) GetDamageReports(c *gin.Context) {
 	c.JSON(http.StatusOK, reports)
 }
 
-// Admin: อัปเดตสถานะรายงานอุปกรณ์ชำรุด
 func (ctrl *DamageReportController) UpdateDamageReportStatus(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var report models.DamageReport
@@ -97,8 +91,9 @@ func (ctrl *DamageReportController) UpdateDamageReportStatus(c *gin.Context) {
 	}
 
 	var input struct {
+		Description  string  `json:"description"`
 		Status       string `json:"status"`
-		Broken_Drone int    `json:"broken_drone"`
+		Broken_Drone *uint    `json:"broken_drone"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -107,13 +102,13 @@ func (ctrl *DamageReportController) UpdateDamageReportStatus(c *gin.Context) {
 		return
 	}
 
-	// Update fields only if they're provided in the input
 	if input.Status != "" {
+		report.Description = input.Description
 		report.Status = input.Status
 	}
-	if input.Broken_Drone != 0 {
-		report.Broken_Drone = uint(input.Broken_Drone)
-	}
+	if input.Broken_Drone != nil { 
+    report.Broken_Drone = *input.Broken_Drone
+}
 
 	if err := ctrl.DB.Save(&report).Error; err != nil {
 		utils.LogError("Failed", err)

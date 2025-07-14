@@ -43,13 +43,12 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Create audit log entry
 	auditLog := models.AuditLog{
-		UserID:    user.ID, // The newly created user's ID
+		UserID:    user.ID, 
 		Action:    "register",
 		TableName: "users",
 		RecordID:  user.ID,
-		NewValue:  "User registered", // Or you can marshal the user struct
+		NewValue:  "User registered", 
 		IPAddress: c.ClientIP(),
 	}
 	ctrl.DB.Create(&auditLog)
@@ -85,7 +84,6 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
-		// Log failed login attempt
 		auditLog := models.AuditLog{
 			Action:    "login_failed",
 			TableName: "users",
@@ -113,7 +111,6 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Log successful login
 	auditLog := models.AuditLog{
 		UserID:    user.ID,
 		Action:    "login",
@@ -130,7 +127,6 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	})
 }
 
-// Add new RefreshToken endpoint
 func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 	var input struct {
 		RefreshToken string `json:"refresh_token" binding:"required"`

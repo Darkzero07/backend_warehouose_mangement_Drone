@@ -88,7 +88,7 @@ func main() {
 func parseDuration(seconds string) time.Duration {
 	duration, err := time.ParseDuration(seconds + "s")
 	if err != nil {
-		return 24 * time.Hour 
+		return 24 * time.Hour
 	}
 	return duration
 }

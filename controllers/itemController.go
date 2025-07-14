@@ -22,13 +22,11 @@ func NewItemController(db *gorm.DB) *ItemController {
 
 func (ctrl *ItemController) CreateItem(c *gin.Context) {
 	var item models.Item
-	// Bind JSON will now expect 'CategoryID'
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Validate CategoryID
 	var category models.Category
 	if err := ctrl.DB.First(&category, item.CategoryID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Category ID provided"})
@@ -43,25 +41,13 @@ func (ctrl *ItemController) CreateItem(c *gin.Context) {
 	utils.LogInfo("Item created successfully", zap.Any("item", item))
 	c.JSON(http.StatusCreated, item)
 
-	// After creation, reload with Category to send back full object
 	ctrl.DB.Preload("Category").First(&item, item.ID)
 	c.JSON(http.StatusCreated, item)
 }
 
-// func (ctrl *ItemController) GetItems(c *gin.Context) {
-// 	var items []models.Item
-// 	// New: Preload Category to get its Name
-// 	if err := ctrl.DB.Preload("Category").Find(&items).Error; err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch items"})
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, items)
-// }
-
 func (ctrl *ItemController) GetItemByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var item models.Item
-	// New: Preload Category to get its Name
 	if err := ctrl.DB.Preload("Category").First(&item, id).Error; err != nil {
 		utils.LogError("Failed", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
@@ -79,12 +65,12 @@ func (ctrl *ItemController) UpdateItem(c *gin.Context) {
 		return
 	}
 
-	var input struct { // Define an anonymous struct for input to control allowed fields
+	var input struct { 
 		Name        string `json:"Name"`
 		Description string `json:"Description"`
 		Quantity    int    `json:"Quantity"`
 		Status      string `json:"Status"`
-		CategoryID  uint   `json:"CategoryID"` // Expect CategoryID from frontend
+		CategoryID  uint   `json:"CategoryID"` 
 		Remark      string `json:"Remark"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -93,7 +79,6 @@ func (ctrl *ItemController) UpdateItem(c *gin.Context) {
 		return
 	}
 
-	// Validate CategoryID
 	var category models.Category
 	if err := ctrl.DB.First(&category, input.CategoryID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Category ID provided"})
@@ -104,7 +89,7 @@ func (ctrl *ItemController) UpdateItem(c *gin.Context) {
 	item.Description = input.Description
 	item.Quantity = input.Quantity
 	item.Status = input.Status
-	item.CategoryID = input.CategoryID // Update the CategoryID field
+	item.CategoryID = input.CategoryID 
 	item.Remark = input.Remark
 
 	if err := ctrl.DB.Save(&item).Error; err != nil {
@@ -112,7 +97,7 @@ func (ctrl *ItemController) UpdateItem(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update item"})
 		return
 	}
-	// After update, reload with Category to send back full object
+	
 	ctrl.DB.Preload("Category").First(&item, item.ID)
 	c.JSON(http.StatusOK, item)
 }

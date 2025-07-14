@@ -7,7 +7,7 @@ type Item struct {
 	Name        string `gorm:"not null"`
 	Description string
 	Quantity    int      `gorm:"not null"`
-	Status      string   // e.g., "Available", "Damaged", "In Use"
+	Status      string   
 	CategoryID  uint     // Foreign key to Category table
 	Category    Category // Belongs To relationship
 	Remark      string
