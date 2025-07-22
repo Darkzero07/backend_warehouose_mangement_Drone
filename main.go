@@ -24,7 +24,7 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// Connect to PostgreSQL
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s  timezone=Asia/Bangkok",
 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 
 	var db *gorm.DB
@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// Auto-migrate database schema
-	err = db.AutoMigrate(&models.User{}, &models.Project{}, &models.Category{}, &models.Item{}, &models.TransactionBorrow{}, &models.TransactionReturn{}, &models.DamageReport{}, &models.AuditLog{})
+	err = db.AutoMigrate(&models.User{}, &models.Project{}, &models.Category{}, &models.Item{}, &models.TransactionBorrow{}, &models.TransactionReturn{}, &models.DamageReport{}, &models.AuditLog{}, &models.Warranty{})
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}

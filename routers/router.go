@@ -33,10 +33,9 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	categoryController := controllers.NewCategoryController(db)
 	passwordResetController := controllers.NewPasswordResetController(db)
 	combinedReportController := controllers.NewCombinedController(db)
-
-	// New transaction controllers
 	transactionBorrowController := controllers.NewTransactionBorrowController(db)
 	transactionReturnController := controllers.NewTransactionReturnController(db)
+	warantyController := controllers.NewWarrantyController(db)
 
 	// Public routes
 	r.POST("/register", authController.Register)
@@ -108,6 +107,12 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			// These are now available to all authenticated users above
 			// admin.GET("/admin/damage-reports", damageReportController.GetDamageReports)
 			admin.PUT("/admin/damage-reports/:id/status", damageReportController.UpdateDamageReportStatus)
+			admin.GET("/admin/warranty", warantyController.GetAllWarranties)
+			admin.GET("/admin/warranty/:id", warantyController.GetWarrantyByID)
+			admin.POST("/admin/warranty", warantyController.CreateWarranty)
+			admin.PUT("/admin/warranty/:id", warantyController.UpdateWarranty)
+			admin.DELETE("/admin/warranty/:id", warantyController.DeleteWarranty)
+			admin.POST("/admin/warranty/upload", warantyController.UploadXLSX)
 		}
 	}
 

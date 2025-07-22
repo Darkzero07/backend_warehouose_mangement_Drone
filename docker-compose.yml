@@ -1,8 +1,7 @@
 version: "3.8"
-
 services:
   db:
-    image: postgres:14 # Using postgres:14 as per your current config
+    image: postgres:14
     restart: always
     environment:
       POSTGRES_DB: warehouse
@@ -12,26 +11,37 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./migrations/initial_schemas.sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d warehouse"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   redis:
     image: redis:6-alpine
     restart: always
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-  pgadmin: # New service for pgAdmin
+  pgadmin:
     image: dpage/pgadmin4
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com # Replace with your desired email
-      PGADMIN_DEFAULT_PASSWORD: admin_password # Replace with your desired password
-      PGADMIN_LISTEN_PORT: 80 # pgAdmin's internal port
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_LISTEN_PORT: 80
     ports:
-      - "8080:80" # Map host port 8080 to container's port 80 (pgAdmin's default web port)
+      - "8080:80"
     depends_on:
-      - db # Ensure pgAdmin starts after the database is up
+      - db
     volumes:
-      - pgadmin_data:/var/lib/pgadmin # Persist pgAdmin configuration and data
+      - pgadmin_data:/var/lib/pgadmin
 
   app:
     build:
@@ -54,9 +64,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - .:/app # Mount current directory to /app in container for development
-
+      - .:/app
 
 volumes:
   pgdata:
-  pgadmin_data: # New volume for pgAdmin data
+  pgadmin_data:
